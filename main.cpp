@@ -6,6 +6,7 @@
 //  Copyright (c) 2015 Bill Zeng. All rights reserved.
 //
 
+#include "Multiplayer.h"
 #include "card.h"
 #include "poker.h"
 #include "deck.h"
@@ -14,6 +15,7 @@
 #include <ctime>
 #include <iostream>
 #include <string>
+#include <sstream>
 vector<card> hand(vector<card> player, vector<card> comcards)
 {
     int points;
@@ -74,9 +76,9 @@ vector<card> hand(vector<card> player, vector<card> comcards)
     //two pair 40
     while(1)
     {
-        for(int i = 0; i < p.size()-1; i++)
+        for(int i = 0; i < p.size()-3; i++)
         {
-            for(int j = i+2; j < p.size()-3; j++)
+            for(int j = i+2; j < p.size()-1; j++)
             {
                 if(p[i].value==p[i+1].value and p[j].value==p[j+1].value)
                 {
@@ -113,7 +115,6 @@ vector<card> hand(vector<card> player, vector<card> comcards)
                         if(p[j].value != highestp[0].value)
                         {
                             points += 60;
-                            highestp.clear();
                             highestp.push_back(p[i]);
                             highestp.push_back(p[i+1]);
                             break;
@@ -371,9 +372,9 @@ int points(vector<card> player, vector<card> comcards)
     //two pair 40
     while(1)
     {
-        for(int i = 0; i < p.size()-1; i++)
+        for(int i = 0; i < p.size()-3; i++)
         {
-            for(int j = i+2; j < p.size()-3; j++)
+            for(int j = i+2; j < p.size()-1; j++)
             {
                 if(p[i].value==p[i+1].value and p[j].value==p[j+1].value)
                 {
@@ -619,7 +620,8 @@ int singleplayer(int startingmoney,int bigblind,int smallblind,int players)
     cout << "Small Blind: " << smallblind << endl;
     cout << "Number of Computer Players: " << players << endl;
     cout << "Game is starting... Press anything to start" << endl;
-    int uselessthing;
+    string uselessthing;
+    cin.ignore();
     cin >> uselessthing;
     //end of intro
     //vectors for the player, cpu and community cards
@@ -665,7 +667,6 @@ int singleplayer(int startingmoney,int bigblind,int smallblind,int players)
             {
                 cout << "CPU " << cpu[i].ainumber << " is out!" << endl;
                 cpu.erase(cpu.begin()+i);
-                point.erase(point.begin()+i+1);
                 bets.erase(bets.begin()+i+1);
                 check.erase(check.begin()+i+1);
                 fold.erase(fold.begin()+i+1);
@@ -676,6 +677,11 @@ int singleplayer(int startingmoney,int bigblind,int smallblind,int players)
             cout << "Congratulations! You win!" << endl;
             return 1;
         }
+        for(int i = 0; i < cpu.size(); i++)
+        {
+            cout << "CPU " << cpu[i].ainumber << " has " << cpu[i].money << "$ left" << endl;
+        }
+        cout << endl;
         for(int i = 0; i < cpu.size()+1; i++)
         {
             bet = 0;
@@ -749,17 +755,17 @@ int singleplayer(int startingmoney,int bigblind,int smallblind,int players)
         {
             int playerbet;
             int cpubet;
-            cout << "CPU " << cpu[cpu.size()].ainumber << " is the big blind (Automatically have to put in " << bigblind << "S)" << endl;
+            cout << "CPU " << cpu[blinds-1].ainumber << " is the big blind (Automatically have to put in " << bigblind << "S)" << endl;
             cout << "You are the small blind (Automatically have to put in " << smallblind << "$)" << endl << endl;
-            if(cpu[cpu.size()].money < bigblind)
+            if(cpu[blinds-1].money < bigblind)
             {
-                cpubet = cpu[cpu.size()].money;
-                cpu[cpu.size()].money -= playerbet;
+                cpubet = cpu[blinds-1].money;
+                cpu[blinds-1].money -= playerbet;
             }
             else
             {
                 cpubet = bigblind;
-                cpu[cpu.size()].money -= bigblind;
+                cpu[blinds-1].money -= bigblind;
             }
             if(money < smallblind)
             {
@@ -775,7 +781,7 @@ int singleplayer(int startingmoney,int bigblind,int smallblind,int players)
             pot += playerbet;
             pot += cpubet;
             bets[0] += playerbet;
-            bets[cpu.size()] += cpubet;
+            bets[blinds] += cpubet;
             blinds = 0;
         }
         else
@@ -824,7 +830,7 @@ int singleplayer(int startingmoney,int bigblind,int smallblind,int players)
                  cpu[i].money = 0;
             }
         }
-        cout << "The dealer deals a new hand" << endl;
+        cout << "The dealer deals a new hand" << endl << endl;
         int turn;
         if(cpu.size() == 1)
         {
@@ -1073,6 +1079,7 @@ int singleplayer(int startingmoney,int bigblind,int smallblind,int players)
                 if(cpu[turn-1].money <= 0)
                 {
                     cout << "CPU " << cpu[turn-1].ainumber << " is all in!" << endl;
+                    check[turn] = true;
                 }
                 else if(fold[turn] == false)
                 {
@@ -1093,15 +1100,15 @@ int singleplayer(int startingmoney,int bigblind,int smallblind,int players)
                     {
                         if(bet > (cpu[turn-1].money*0.6))
                         {
-                            if(rand()%8 > 5)
+                            if(rand()%9 > 7)
                             {
                                 cout << "CPU " << cpu[turn-1].ainumber << " calls" << endl;
                                 int aicall = bet - bets[turn];
-                                if(aicall > cpu[turn].money)
+                                if(aicall > cpu[turn-1].money)
                                 {
-                                    aicall = cpu[turn].money;
+                                    aicall = cpu[turn-1].money;
                                 }
-                                cpu[turn].money -= aicall;
+                                cpu[turn-1].money -= aicall;
                                 pot += aicall;
                                 bets[turn] = bet;
                             }
@@ -1115,24 +1122,24 @@ int singleplayer(int startingmoney,int bigblind,int smallblind,int players)
                         {
                             cout << "CPU " << cpu[turn-1].ainumber << " calls" << endl;
                             int aicall = bet - bets[turn];
-                            if(aicall > cpu[turn].money)
+                            if(aicall > cpu[turn-1].money)
                             {
-                                aicall = cpu[turn].money;
+                                aicall = cpu[turn-1].money;
                             }
-                            cpu[turn].money -= aicall;
+                            cpu[turn-1].money -= aicall;
                             pot += aicall;
                             bets[turn] = bet;
                         }
                     }
                     else if(bets[turn] < bet and cpu[turn-1].callif == false)
                     {
-                        if(rand()%7 > 4)
+                        if(rand()%8 > 6)
                         {
                             cout << "CPU " << cpu[turn-1].ainumber << " calls" << endl;
                             int aicall = bet - bets[turn];
-                            if(aicall > cpu[turn].money)
+                            if(aicall > cpu[turn-1].money)
                             {
-                                aicall = cpu[turn].money;
+                                aicall = cpu[turn-1].money;
                             }
                             cpu[turn].money -= aicall;
                             pot += aicall;
@@ -1210,27 +1217,25 @@ int singleplayer(int startingmoney,int bigblind,int smallblind,int players)
                         int winners = 1;
                         for(int i = 0; i < point.size()-1; i++)
                         {
-                            if(point[i] == point[i+1])
+                            if(point[i] == point[i+1] and point[i] == point[0])
                             {
                                 winners++;
                             }
                         }
                         vector<int> thewinners;
                         thewinners.clear();
+                        int a = 2;
                         for(int i = 0; i < cpu.size()+1; i++)
                         {
                             if(i == 0)
                             {
-                                if(fold[0] == false)
+                                if(fold[0] == false and points(player, communitycards) == point[0])
                                 {
-                                    if(points(player, communitycards) == point[0])
+                                    cout << "You ";
+                                    thewinners.push_back(i);
+                                    if(point[0] == point[1])
                                     {
-                                        cout << "You ";
-                                        thewinners.push_back(i);
-                                        if(point[0] == point[1])
-                                        {
-                                            cout << "and ";
-                                        }
+                                        cout << "and ";
                                     }
                                 }
                             }
@@ -1238,6 +1243,11 @@ int singleplayer(int startingmoney,int bigblind,int smallblind,int players)
                             {
                                 cout << "CPU " << cpu[i-1].ainumber << " ";
                                 thewinners.push_back(i);
+                                if(winners >= a)
+                                {
+                                    cout << "and ";
+                                    a++;
+                                }
                             }
                         }
                         cout << "has won the pot! (" << pot << ")" << endl << "It will be given accordingly" << endl;
@@ -1246,19 +1256,16 @@ int singleplayer(int startingmoney,int bigblind,int smallblind,int players)
                         winhand.clear();
                         for(int i = 0; i < point.size(); i++)
                         {
-                            if(i == 0)
+                            if(i == 0 and points(player, communitycards) == point[0])
                             {
-                                if(points(player, communitycards) == point[0])
-                                {
-                                    winhand = hand(player,communitycards);
-                                    break;
-                                }
+                                winhand = hand(player,communitycards);
+                                break;
                             }
                             else
                             {
-                                if(points(cpu[i-1].getvector(), communitycards) == point[0])
+                                if(points(cpu[i].getvector(), communitycards) == point[0])
                                 {
-                                    winhand = hand(cpu[i-1].getvector(),communitycards);
+                                    winhand = hand(cpu[i].getvector(),communitycards);
                                     break;
                                 }
                             }
@@ -1267,7 +1274,46 @@ int singleplayer(int startingmoney,int bigblind,int smallblind,int players)
                         {
                             cout << winhand[i].toString() << " ";
                         }
-                        cout << endl;
+                        if(point[0] < 20)
+                        {
+                            cout << "(High Card)" << endl;
+                        }
+                        else if(point[0] < 40)
+                        {
+                            cout << "(One Pair)" << endl;
+                        }
+                        else if(point[0] < 60)
+                        {
+                            cout << "(Two Pair)" << endl;
+                        }
+                        else if(point[0] < 80)
+                        {
+                            cout << "(Three of a kind)" << endl;
+                        }
+                        else if(point[0] < 100)
+                        {
+                            cout << "(Straight)" << endl;
+                        }
+                        else if(point[0] < 120)
+                        {
+                            cout << "(Flush)" << endl;
+                        }
+                        else if(point[0] < 140)
+                        {
+                            cout << "(Full house)" << endl;
+                        }
+                        else if(point[0] < 160)
+                        {
+                            cout << "(Four of a kind)" << endl;
+                        }
+                        else if(point[0] < 180)
+                        {
+                            cout << "(Straight Flush)" << endl;
+                        }
+                        else if(point[0] < 200)
+                        {
+                            cout << "(Royal Flush)" << endl;
+                        }
                         for(int i = 0; i < thewinners.size(); i++)
                         {
                             if(i == 0 and thewinners[i] == 0)
@@ -1279,6 +1325,8 @@ int singleplayer(int startingmoney,int bigblind,int smallblind,int players)
                                 cpu[thewinners[i]-1].money += pot/winners;
                             }
                         }
+                        cout << "Enter anything to continue...." << endl;
+                        cin >> uselessthing;
                         game = 0;
                     }
                     else if(turnorriver%2 == 1)
@@ -1312,9 +1360,767 @@ int singleplayer(int startingmoney,int bigblind,int smallblind,int players)
         }
     return 0;
 }
-
-
-
+string multiplayer(int startingmoney, int bigblind, int smallblind, int players)
+{
+    srand(time(NULL));
+    //intro
+    cout << "Starting Money: " << startingmoney << endl;
+    cout << "Big Blind: " << bigblind << endl;
+    cout << "Small Blind: " << smallblind << endl;
+    cout << "Number of Players: " << players << endl;
+    cout << "Game is starting... Press anything to start" << endl;
+    string uselessthing;
+    cin >> uselessthing;
+    //game objects
+    vector<player> p;
+    vector<card> communitycards;
+    vector<string> history;
+    vector<int> point;
+    deck d;
+    int highestbet;
+    int blind = rand()%players;
+    //adding all the players
+    for(int i = 0; i < players; i++)
+    {
+        string name;
+        cout << "What is the name of player " << i+1 << ":";
+        cin >> name;
+        player temp(startingmoney, name);
+        p.push_back(temp);
+    }
+    cout << endl;
+    while(1)
+    {
+        int show = 0;
+        int turnorriver = 0;
+        int pot = 0;
+        for(int i = 0; i < p.size(); i++)
+        {
+            if(p[i].money <= 0)
+            {
+                cout << p[i].playername << " is out!" << endl;
+                p.erase(p.begin()+i);
+            }
+        }
+        if(p.size() == 1)
+        {
+            cout << p[0].playername << " wins!" << endl;
+            return p[0].playername;
+        }
+        for(int i = 0; i < p.size(); i++)
+        {
+            p[i].check = false;
+            p[i].fold = false;
+            p[i].bet = 0;
+        }
+        for(int i = 0; i < p.size(); i++)
+        {
+            p[i].vectorclear();
+            p[i].addcard(d.draw());
+            p[i].addcard(d.draw());
+        }
+        communitycards.clear();
+        for(int i = 0; i < 3; i++)
+        {
+            communitycards.push_back(d.draw());
+        }
+        if(blind == p.size()-1)
+        {
+            int p1bet;
+            int p2bet;
+            cout << p[blind].playername << " is the big blind (Automatically have to put in " << bigblind << "$)" << endl;
+            cout << p[0].playername << " is the small blind (Automatically have to put in " << smallblind << "$)" << endl << endl;
+            if(p[blind].money < bigblind)
+            {
+                p1bet = p[blind].money;
+                p[blind].money -= p1bet;
+            }
+            else
+            {
+                p1bet = bigblind;
+                p[blind].money -= bigblind;
+            }
+            if(p[0].money < smallblind)
+            {
+                p2bet = p[0].money;
+                p[0].money -= p2bet;
+            }
+            else
+            {
+                p2bet = smallblind;
+                p[0].money -= smallblind;
+            }
+            highestbet = bigblind;
+            pot += p2bet;
+            pot += p1bet;
+            string bb;
+            string sb;
+            stringstream out;
+            out << bigblind;
+            bb = out.str();
+            stringstream out2;
+            out2 << smallblind;
+            sb = out2.str();
+            p[0].bet = p2bet;
+            p[blind].bet = p1bet;
+            string h = p[0].playername + " is the small blind(" + sb + ")";
+            string h2 = p[blind].playername + " is the big blind(" + bb + ")";
+            if(history.size() > p.size())
+            {
+                history.erase(history.begin());
+            }
+            history.push_back(h2);
+            if(history.size() > p.size())
+            {
+                history.erase(history.begin());
+            }
+            history.push_back(h);
+            if(history.size() > p.size())
+            {
+                history.erase(history.begin());
+            }
+        }
+        else
+        {
+            int p1bet;
+            int p2bet;
+            cout << p[blind].playername << " is the big blind (Automatically have to put in " << bigblind << "$)" << endl;
+            cout << p[blind+1].playername << " is the small blind (Automatically have to put in " << smallblind << "$)" << endl << endl;
+            if(p[blind].money < bigblind)
+            {
+                p1bet = p[blind].money;
+                p[blind].money -= p1bet;
+            }
+            else
+            {
+                p1bet = bigblind;
+                p[blind].money -= bigblind;
+            }
+            if(p[blind+1].money < smallblind)
+            {
+                p2bet = p[blind+1].money;
+                p[blind+1].money -= p2bet;
+            }
+            else
+            {
+                p2bet = smallblind;
+                p[blind+1].money -= smallblind;
+            }
+            highestbet = bigblind;
+            pot += p2bet;
+            pot += p1bet;
+            string bb;
+            string sb;
+            stringstream out;
+            out << bigblind;
+            bb = out.str();
+            stringstream out2;
+            out2 << smallblind;
+            sb = out2.str();
+            p[blind+1].bet = p2bet;
+            p[blind].bet = p1bet;
+            string h = p[blind+1].playername + " is the small blind(" + sb + ")";
+            string h2 = p[blind].playername + " is the big blind(" + bb + ")";
+            if(history.size() > p.size())
+            {
+                history.erase(history.begin());
+            }
+            history.push_back(h2);
+            if(history.size() > p.size())
+            {
+                history.erase(history.begin());
+            }
+            history.push_back(h);
+            if(history.size() > p.size())
+            {
+                history.erase(history.begin());
+            }
+        }
+        if(blind == p.size()-1)
+        {
+            blind = 0;
+        }
+        else
+        {
+            blind++;
+        }
+        int turn = blind+1;
+        if(p.size() == 2)
+        {
+            turn = blind;
+        }
+        if(turn == p.size())
+        {
+            turn = 0;
+        }
+        cout << "The dealer deals a new hand" << endl << endl;
+        while(1)
+        {
+            if(p[turn].fold == true)
+            {
+                cout << p[turn].playername << " has folded" << endl;
+                string h = p[turn].playername + " has folded";
+                history.push_back(h);
+                if(history.size() > p.size())
+                {
+                    history.erase(history.begin());
+                }
+                if(turn == 0)
+                {
+                    turn = p.size()-1;
+                }
+                else
+                {
+                    turn--;
+                }
+            }
+            else if(p[turn].money == 0)
+            {
+                cout << "It is " << p[turn].playername << "'s turn" << endl;
+                cout << "Press anything to continue..." << endl;
+                cin >> uselessthing;
+                cout << "Community cards: ";
+                for(int i = 0; i < communitycards.size(); i++)
+                {
+                    cout << communitycards[i].toString() << " ";
+                }
+                cout << endl << "Hole cards: ";
+                p[turn].getcards();
+                cout << endl;
+                cout << "Your current money: " << p[turn].money << endl;
+                cout << "The current pot: " << pot << endl;
+                cout << "Highest bet: " << highestbet;
+                if(p[turn].bet == highestbet)
+                {
+                    cout << " (You are up to the current highest bet)" << endl;
+                }
+                else
+                {
+                    cout << endl << "Your current bet: " << p[turn].bet << endl;
+                }
+                cout << "You are all in, press anything to continue..." << endl;
+                cin >> uselessthing;
+                p[turn].check = true;
+                string h = p[turn].playername + " is all in!";
+                history.push_back(h);
+                if(history.size() > p.size())
+                {
+                    history.erase(history.begin());
+                }
+                if(turn == 0)
+                {
+                    turn = p.size()-1;
+                }
+                else
+                {
+                    turn--;
+                }
+            }
+            else if(p[turn].check == true)
+            {
+                cout << p[turn].playername << " has already checked" << endl;
+                if(turn == 0)
+                {
+                    turn = p.size()-1;
+                }
+                else
+                {
+                    turn--;
+                }
+            }
+            else
+            {
+                int choice;
+                if(show == 0)
+                {
+                    cout << "It is " << p[turn].playername << "'s turn" << endl;
+                    cout << "Press anything to continue..." << endl;
+                    cin >> uselessthing;
+                    show++;
+                }
+                cout << "It is your turn, what do you want to do?" << endl;
+                cout << "Community cards: ";
+                for(int i = 0; i < communitycards.size(); i++)
+                {
+                    cout << communitycards[i].toString() << " ";
+                }
+                cout << endl << "Hole cards: ";
+                p[turn].getcards();
+                cout << endl;
+                cout << "Your current money: " << p[turn].money << endl;
+                cout << "The current pot: " << pot << endl;
+                cout << "Highest bet: " << highestbet;
+                if(p[turn].bet == highestbet)
+                {
+                    cout << " (You are up to the current highest bet)" << endl;
+                }
+                else
+                {
+                    cout << endl << "Your current bet: " << p[turn].bet << endl;
+                }
+                if(highestbet > p[turn].bet)
+                {
+                    cout << "1.Raise" << endl;
+                    cout << "2.Call";
+                    if(p[turn].money <= highestbet - p[turn].bet)
+                    {
+                        cout << "(All in)" << endl;
+                    }
+                    else
+                    {
+                        cout << endl;
+                    }
+                    cout << "3.All in" << endl;
+                    cout << "4.Fold" << endl;
+                    cout << "5.Show History of the game" << endl;
+                    cin >> choice;
+                    if(choice == 1)
+                    {
+                        int amount;
+                        cout << "By how much do you want to raise by?" << endl;
+                        cin >> amount;
+                        if(amount <= 0)
+                        {
+                            cout << "Please enter a number higher than 0" << endl;
+                        }
+                        else if(amount + (highestbet - p[turn].money) > p[turn].money)
+                        {
+                            cout << "The amount you entered is greater that your current money" << endl;
+                        }
+                        else
+                        {
+                            p[turn].money -= amount + (highestbet - p[turn].bet);
+                            pot += amount + (highestbet - p[turn].bet);
+                            highestbet += amount;
+                            p[turn].bet = highestbet;
+                            show = 0;
+                            string a;
+                            stringstream result;
+                            result << amount;
+                            a = result.str();
+                            string h = p[turn].playername + " raised the pot by " + a + "$";
+                            history.push_back(h);
+                            if(history.size() > p.size())
+                            {
+                                history.erase(history.begin());
+                            }
+                            for(int i = 0; i < p.size(); i++)
+                            {
+                                p[i].check = false;
+                            }
+                            if(turn == 0)
+                            {
+                                turn = p.size()-1;
+                            }
+                            else
+                            {
+                                turn--;
+                            }
+                        }
+                    }
+                    else if(choice == 2)
+                    {
+                        if(p[turn].money < highestbet - p[turn].bet)
+                        {
+                            pot += p[turn].money;
+                            p[turn].bet = highestbet;
+                            p[turn].money = 0;
+                        }
+                        else
+                        {
+                            pot += highestbet - p[turn].bet;
+                            p[turn].money -= highestbet - p[turn].bet;
+                            p[turn].bet = highestbet;
+                        }
+                        string h = p[turn].playername + " called";
+                        history.push_back(h);
+                        if(history.size() > p.size())
+                        {
+                            history.erase(history.begin());
+                        }
+                        if(turn == 0)
+                        {
+                            turn = p.size()-1;
+                        }
+                        else
+                        {
+                            turn--;
+                        }
+                        show = 0;
+                    }
+                    else if(choice == 3)
+                    {
+                        cout << "Are you sure?" << endl;
+                        cout << "1.Yes" << endl;
+                        cout << "2.No" << endl;
+                        cin >> choice;
+                        if(choice == 1)
+                        {
+                            pot += p[turn].money;
+                            highestbet += p[turn].money;
+                            p[turn].money = 0;
+                            show = 0;
+                            string h = p[turn].playername + " is all in!";
+                            history.push_back(h);
+                            if(history.size() > p.size())
+                            {
+                                history.erase(history.begin());
+                            }
+                            for(int i = 0; i < p.size(); i++)
+                            {
+                                p[i].check = false;
+                            }
+                            if(turn == 0)
+                            {
+                                turn = p.size()-1;
+                            }
+                            else
+                            {
+                                turn--;
+                            }
+                        }
+                    }
+                    else if(choice == 4)
+                    {
+                        cout << "Are you sure?" << endl;
+                        cout << "1.Yes" << endl;
+                        cout << "2.No" << endl;
+                        cin >> choice;
+                        if(choice == 1)
+                        {
+                            p[turn].fold = true;
+                            show = 0;
+                            string h = p[turn].playername + " has folded";
+                            history.push_back(h);
+                            if(history.size() > p.size())
+                            {
+                                history.erase(history.begin());
+                            }
+                            if(turn == 0)
+                            {
+                                turn = p.size()-1;
+                            }
+                            else
+                            {
+                                turn--;
+                            }
+                        }
+                    }
+                    else if(choice == 5)
+                    {
+                        for(int i = 0; i < history.size(); i++)
+                        {
+                            cout << history[i] << endl;
+                        }
+                        cout << endl;
+                    }
+                }
+                else if(highestbet == p[turn].bet)
+                {
+                    cout << "1.Raise" << endl;
+                    cout << "2.Check" << endl;
+                    cout << "3.All in" << endl;
+                    cout << "4.Fold" << endl;
+                    cout << "5.Show History of the game" << endl;
+                    cin >> choice;
+                    if(choice == 1)
+                    {
+                        int amount;
+                        cout << "By how much do you want to raise by?" << endl;
+                        cin >> amount;
+                        if(amount <= 0)
+                        {
+                            cout << "Please enter a number higher than 0" << endl;
+                        }
+                        else if(amount + (highestbet - p[turn].money) > p[turn].money)
+                        {
+                            cout << "The amount you entered is greater that your current money" << endl;
+                        }
+                        else
+                        {
+                            p[turn].money -= amount + (highestbet - p[turn].bet);
+                            pot += amount + (highestbet - p[turn].bet);
+                            highestbet += amount;
+                            p[turn].bet = highestbet;
+                            show = 0;
+                            string a;
+                            stringstream result;
+                            result << amount;
+                            a = result.str();
+                            string h = p[turn].playername + " raised the pot by " + a + "$";
+                            history.push_back(h);
+                            if(history.size() > p.size())
+                            {
+                                history.erase(history.begin());
+                            }
+                            for(int i = 0; i < p.size(); i++)
+                            {
+                                p[i].check = false;
+                            }
+                            if(turn == 0)
+                            {
+                                turn = p.size()-1;
+                            }
+                            else
+                            {
+                                turn--;
+                            }
+                        }
+                    }
+                    else if(choice == 2)
+                    {
+                        p[turn].check = true;
+                        show = 0;
+                        string h = p[turn].playername + " checked";
+                        history.push_back(h);
+                        if(history.size() > p.size())
+                        {
+                            history.erase(history.begin());
+                        }
+                        if(turn == 0)
+                        {
+                            turn = p.size()-1;
+                        }
+                        else
+                        {
+                            turn--;
+                        }
+                    }
+                    else if(choice == 3)
+                    {
+                        cout << "Are you sure?" << endl;
+                        cout << "1.Yes" << endl;
+                        cout << "2.No" << endl;
+                        cin >> choice;
+                        if(choice == 1)
+                        {
+                            pot += p[turn].money;
+                            highestbet += p[turn].money;
+                            p[turn].money = 0;
+                            show = 0;
+                            string h = p[turn].playername + " is all in!";
+                            history.push_back(h);
+                            if(history.size() > p.size())
+                            {
+                                history.erase(history.begin());
+                            }
+                            for(int i = 0; i < p.size(); i++)
+                            {
+                                p[i].check = false;
+                            }
+                            if(turn == 0)
+                            {
+                                turn = p.size()-1;
+                            }
+                            else
+                            {
+                                turn--;
+                            }
+                        }
+                    }
+                    else if(choice == 4)
+                    {
+                        p[turn].fold = true;
+                        show = 0;
+                        string h = p[turn].playername + " has folded";
+                        history.push_back(h);
+                        if(history.size() > p.size())
+                        {
+                            history.erase(history.begin());
+                        }
+                        if(turn == 0)
+                        {
+                            turn = p.size()-1;
+                        }
+                        else
+                        {
+                            turn--;
+                        }
+                    }
+                    else if(choice == 5)
+                    {
+                        for(int i = 0; i < history.size(); i++)
+                        {
+                            cout << history[i] << endl;
+                        }
+                        cout << endl;
+                    }
+                }
+            }
+            int nextcard = 0;
+            for(int i = 0; i < p.size(); i++)
+            {
+                if(p[i].check == true or p[i].fold == true)
+                {
+                    nextcard++;
+                }
+            }
+            int folds = 0;
+            for(int i = 0; i < p.size(); i++)
+            {
+                if(p[i].fold == true)
+                {
+                    folds++;
+                }
+            }
+            if(nextcard == p.size() or folds == p.size()-1)
+            {
+                point.clear();
+                if(communitycards.size() == 5 or folds == p.size()-1)
+                {
+                    for(int i = 0; i < p.size(); i++)
+                    {
+                        if(p[i].fold == false)
+                        {
+                            point.push_back(points(p[i].getvector(), communitycards));
+                        }
+                    }
+                    if(point.size() > 1)
+                    {
+                        for(int i = 0; i < point.size()-1; i++)
+                        {
+                            int temp = point[i];
+                            for(int j = i+1; j < point.size(); j++)
+                            {
+                                if(point[i] < point[j])
+                                {
+                                    point[i] = point[j];
+                                    point[j] = temp;
+                                    temp = point[i];
+                                }
+                            }
+                        }
+                    }
+                    int winners = 1;
+                    for(int i = 0; i < point.size()-1; i++)
+                    {
+                        if(point[i] == point[i+1] and point[i] == point[0])
+                        {
+                            winners++;
+                        }
+                    }
+                    vector<int> thewinners;
+                    thewinners.clear();
+                    int a = winners - 1;
+                    for(int i = 0; i < p.size(); i++)
+                    {
+                        if(point[0] == points(p[i].getvector(), communitycards) and p[i].fold == false)
+                        {
+                            cout << p[i].playername << " ";
+                            thewinners.push_back(i);
+                        }
+                        if(a > 0)
+                        {
+                            cout << "and ";
+                            a--;
+                        }
+                    }
+                    cout << "has won the pot! (" << pot << "$)" << endl << "It will be given accordingly" << endl;
+                    int an = winners - 1;
+                    string h = "";
+                    for(int i = 0; i < thewinners.size(); i++)
+                    {
+                        h = h + p[thewinners[i]].playername + " ";
+                        if(an > 0)
+                        {
+                            h = h + "and ";
+                            an--;
+                        }
+                    }
+                    string str;
+                    stringstream itos;
+                    itos << pot;
+                    str = itos.str();
+                    h = h + "has won the pot (" + str + "$)";
+                    history.push_back(h);
+                    if(history.size() > p.size())
+                    {
+                        history.erase(history.begin());
+                    }
+                    cout << "The winning hand was: ";
+                    vector<card> winhand;
+                    winhand.clear();
+                    for(int i = 0; i < point.size(); i++)
+                    {
+                        if(points(p[i].getvector(), communitycards) == point[0])
+                        {
+                            winhand = hand(p[i].getvector(),communitycards);
+                            break;
+                        }
+                    }
+                    for(int i = 0; i < winhand.size(); i++)
+                    {
+                        cout << winhand[i].toString() << " ";
+                    }
+                    if(point[0] < 20)
+                    {
+                        cout << "(High Card)" << endl;
+                    }
+                    else if(point[0] < 40)
+                    {
+                        cout << "(One Pair)" << endl;
+                    }
+                    else if(point[0] < 60)
+                    {
+                        cout << "(Two Pair)" << endl;
+                    }
+                    else if(point[0] < 80)
+                    {
+                        cout << "(Three of a kind)" << endl;
+                    }
+                    else if(point[0] < 100)
+                    {
+                        cout << "(Straight)" << endl;
+                    }
+                    else if(point[0] < 120)
+                    {
+                        cout << "(Flush)" << endl;
+                    }
+                    else if(point[0] < 140)
+                    {
+                        cout << "(Full house)" << endl;
+                    }
+                    else if(point[0] < 160)
+                    {
+                        cout << "(Four of a kind)" << endl;
+                    }
+                    else if(point[0] < 180)
+                    {
+                        cout << "(Straight Flush)" << endl;
+                    }
+                    else if(point[0] < 200)
+                    {
+                        cout << "(Royal Flush)" << endl;
+                    }
+                    for(int i = 0; i < thewinners.size(); i++)
+                    {
+                        p[thewinners[i]].money += pot/winners;
+                    }
+                    cout << "Enter anything to continue...." << endl;
+                    cin >> uselessthing;
+                    break;
+                }
+                else if(turnorriver%2 == 1)
+                {
+                    cout << "The dealer has put out the river" << endl;
+                    communitycards.push_back(d.draw());
+                    turnorriver++;
+                }
+                else
+                {
+                    cout << "The dealer has put out the turn" << endl;
+                    communitycards.push_back(d.draw());
+                    turnorriver++;
+                }
+                for(int i = 0; i < p.size(); i++)
+                {
+                    p[i].check = false;
+                }
+            }
+        }
+    }
+    return NULL;
+}
 
 int main()
 {
@@ -1358,7 +2164,14 @@ int main()
         {
             cout << "How many players are there:";
             cin >> players;
-            //multiplayer(startingmoney,bigblind,smallblind,players);
+            if(players > 1)
+            {
+                multiplayer(startingmoney,bigblind,smallblind,players);
+            }
+            else
+            {
+                cout << "You must enter a number higher than 1" << endl;
+            }
         }
         if(option == 3)
         {
@@ -1388,7 +2201,7 @@ int main()
                 cout << "4.Full house (Any three cards of the same rank together with any two cards of the same rank)" << endl;
                 cout << "3.Four of a kind (Any four cards of the same rank)" << endl << endl;
                 cout << "2.Straight Flush (Any straight with all five cards of the same suit)" << endl << endl;
-                cout << "1.Straight Flush (A straight from a ten to an ace with all five cards of the same suit)" << endl << endl;
+                cout << "1.Royal Flush (A straight from a ten to an ace with all five cards of the same suit)" << endl << endl;
                 cout << "Player Info" << endl;
                 cout << "Starting Money:" << startingmoney << endl;
                 cout << "Big Blind:" << bigblind << endl;
